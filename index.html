@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Play Bonus</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Стиль под тему Телеграма */
+        body {
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            text-align: center;
+            padding: 20px;
+        }
+        .bonus-card {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        button {
+            background: var(--tg-theme-button-color, #248bed);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
 
+    <h1>Team Play Bonus 🏆</h1>
+    <div class="bonus-card">
+        <p id="user-info">Загрузка данных пользователя...</p>
+        <h2 id="balance">Баланс: 0 BP</h2>
+        <button id="claim-btn">Получить бонус</button>
+    </div>
+
+    <script type="module">
+        // 1. ПОДКЛЮЧЕНИЕ FIREBASE
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ВСТАВЬ СВОИ ДАННЫЕ ИЗ ВКЛАДКИ FIREBASE (Project Settings -> Web App)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBk4hzLYNl9C4V7SyBMUlGis23IJ8x5TDI",
+            authDomain: "teamplaybonus.firebaseapp.com",
+            projectId: "teamplaybonus",
+            storageBucket: "teamplaybonus.firebasestorage.app",
+            messagingSenderId: "968832925102",
+            appId: "1:968832925102:web:675d627c0e0733dc595c3f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const tg = window.Telegram.WebApp;
+
+        tg.expand(); // Раскрыть на весь экран
+
+        const user = tg.initDataUnsafe?.user;
+
+        if (user) {
+            document.getElementById('user-info').innerText = `Игрок: ${user.first_name}`;
+            
+            // Ссылка на документ пользователя в базе
+            const userRef = doc(db, "players", user.id.toString());
+
+            // Функция обновления баланса на экране
+            async function updateDisplay() {
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    document.getElementById('balance').innerText = `Баланс: ${snap.data().points} BP`;
+                }
+            }
+
+            // Клик по кнопке "Получить бонус"
+            document.getElementById('claim-btn').onclick = async () => {
+                await setDoc(userRef, {
+                    name: user.first_name,
+                    points: increment(10) // Добавляем 10 очков
+                }, { merge: true });
+                
+                tg.HapticFeedback.notificationOccurred('success'); // Вибрация
+                updateDisplay();
+            };
+
+            updateDisplay();
+        } else {
+            document.getElementById('user-info').innerText = "Запустите через Telegram!";
+        }
+    </script>
+</body>
+</html>
