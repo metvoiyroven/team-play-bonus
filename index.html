@@ -8,26 +8,38 @@
     <style>
         :root { --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --text: #ffffff; --sub: #888888; --accent: linear-gradient(45deg, #ffd700, #ffae00); }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* Шапка */
         .header { position: sticky; top: 0; background: var(--card); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; z-index: 1000; }
         .user-nick { font-weight: bold; color: var(--gold); font-size: 18px; }
         .user-balance { font-size: 14px; color: #fff; }
+
+        /* Навигация */
         .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #333; z-index: 1000; }
         .nav-item { color: var(--sub); font-size: 10px; display: flex; flex-direction: column; align-items: center; border: none; background: none; flex: 1; cursor: pointer; }
         .nav-item.active { color: var(--gold); }
+
+        /* Страницы */
         .page { display: none; padding: 20px; padding-bottom: 100px; animation: fadeIn 0.2s; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Карточки и кнопки */
         .glass-card { background: var(--card); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid #333; margin-bottom: 15px; }
         .btn-main { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; }
         .btn-main:disabled { background: #444; color: #888; }
+
+        /* Рулетка */
         .roulette-container { position: relative; width: 100%; height: 90px; background: #111; border-radius: 15px; margin: 20px 0; overflow: hidden; border: 2px solid #333; display: none; }
         .roulette-line { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: var(--gold); z-index: 10; box-shadow: 0 0 10px var(--gold); }
-        .roulette-track { display: flex; position: absolute; left: 0; top: 0; height: 100%; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
-        .roulette-item { min-width: 100px; height: 100%; display: flex; align-items: center; justify-content: center; background: #1a1a1a; border-right: 1px solid #222; font-size: 12px; text-align: center; }
-        .prize-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
-        .prize-mini { background: #222; padding: 8px; border-radius: 10px; font-size: 10px; border: 1px solid #333; color: #ccc; }
+        .roulette-track { display: flex; position: absolute; left: 0; top: 0; height: 100%; }
+        .roulette-item { min-width: 100px; height: 100%; display: flex; align-items: center; justify-content: center; background: #1a1a1a; border-right: 1px solid #222; font-size: 12px; text-align: center; white-space: nowrap; }
+
+        /* Элементы списков */
         .list-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
         #case-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .prize-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+        .prize-mini { background: #222; padding: 8px; border-radius: 10px; font-size: 10px; border: 1px solid #333; color: #ccc; }
     </style>
 </head>
 <body>
@@ -41,7 +53,7 @@
 
     <div id="p-home" class="page active">
         <h2>Новости</h2>
-        <div class="glass-card"><h3>ДОБРО ПОЖАЛОВАТЬ!</h3></div>
+        <div class="glass-card"><h3>ДОБРО ПОЖАЛОВАТЬ!</h3><p style="color:var(--sub)">Система начисления звезд исправлена.</p></div>
     </div>
 
     <div id="p-games" class="page">
@@ -56,11 +68,14 @@
     <div id="case-view">
         <div onclick="closeCase()" style="color: var(--gold); margin-bottom: 20px; cursor: pointer;">← НАЗАД</div>
         <div class="prize-grid" id="prizes-list"></div>
-        <div id="roulette" class="roulette-container"><div class="roulette-line"></div><div id="track" class="roulette-track"></div></div>
+        <div id="roulette" class="roulette-container">
+            <div class="roulette-line"></div>
+            <div id="track" class="roulette-track"></div>
+        </div>
         <button class="btn-main" id="btn-open-stars" onclick="roll('stars')">ОТКРЫТЬ ЗА 500 ⭐</button>
         <div style="margin-top: 20px; background: #222; padding: 15px; border-radius: 15px;">
             <input type="text" id="promo-input" placeholder="Промокод" style="background:#111; border:none; color:#fff; padding:12px; border-radius:10px; width:100%; box-sizing:border-box; margin-bottom:10px;">
-            <button onclick="roll('promo')" class="btn-main" style="background:var(--gold)">АКТИВИРОВАТЬ КОД</button>
+            <button onclick="roll('promo')" class="btn-main" style="background:var(--gold)">АКТИВИРОВАТЬ</button>
         </div>
     </div>
 
@@ -77,7 +92,7 @@
     <div id="p-profile" class="page">
         <h2>Профиль</h2>
         <div class="glass-card">
-            <input type="text" id="n-input" placeholder="Никнейм" style="background:#222; border:none; color:#fff; padding:12px; border-radius:10px; width:70%;">
+            <input type="text" id="n-input" style="background:#222; border:none; color:#fff; padding:12px; border-radius:10px; width:70%;">
             <button onclick="changeNick()" style="color:var(--gold); border:none; background:none; font-weight:bold;">OK</button>
         </div>
         <h3>Инвентарь</h3>
@@ -116,6 +131,7 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('p-'+name).classList.add('active');
         el.classList.add('active');
+        closeCase();
         if(name === 'profile') loadInv();
         if(name === 'top') loadTop();
         if(name === 'bonuses') checkBonus();
@@ -157,22 +173,38 @@
             } else { tg.showAlert("Неверный код!"); return; }
         }
 
+        const win = prizes[Math.floor(Math.random() * prizes.length)];
         const track = document.getElementById('track');
-        document.getElementById('roulette').style.display = 'block';
-        track.innerHTML = prizes.concat(prizes, prizes).map(p => `<div class="roulette-item">${p}</div>`).join('');
-        
-        const win = prizes[Math.floor(Math.random()*prizes.length)];
-        track.children[40].innerText = win;
-        track.children[40].style.color = 'gold';
+        const roulContainer = document.getElementById('roulette');
+        roulContainer.style.display = 'block';
+        document.getElementById('btn-open-stars').disabled = true;
 
-        setTimeout(() => { track.style.transform = `translateX(-${(40 * 100) - 150}px)`; }, 100);
+        let itemsHTML = "";
+        for (let i = 0; i < 60; i++) {
+            let p = (i === 40) ? win : prizes[Math.floor(Math.random() * prizes.length)];
+            itemsHTML += `<div class="roulette-item" ${i===40 ? 'style="color:gold; font-weight:bold;"' : ''}>${p}</div>`;
+        }
+        track.innerHTML = itemsHTML;
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(0px)';
+
+        setTimeout(() => {
+            const itemWidth = 100;
+            const stopPos = (40 * itemWidth) - (roulContainer.offsetWidth / 2) + (itemWidth / 2);
+            track.style.transition = 'transform 4s cubic-bezier(0.1, 0, 0.1, 1)';
+            track.style.transform = `translateX(-${stopPos}px)`;
+        }, 100);
 
         setTimeout(async () => {
-            let winS = win.includes("Звезд") ? parseInt(win) : 0;
-            let cost = type === 'stars' ? -500 : 0;
-            await updateDoc(userRef, { stars: increment(cost + winS), inventory: arrayUnion({ id: Date.now(), title: win, date: new Date().toLocaleDateString(), used: false }) });
+            let winStars = win.includes("Звезд") ? parseInt(win) : 0;
+            let cost = (type === 'stars') ? -500 : 0;
+            await updateDoc(userRef, { 
+                stars: increment(cost + winStars), 
+                inventory: arrayUnion({ id: Date.now(), title: win, date: new Date().toLocaleDateString(), used: false }) 
+            });
+            tg.showAlert("Выпало: " + win);
             location.reload();
-        }, 4500);
+        }, 4600);
     };
 
     window.getBonus = async () => {
@@ -186,13 +218,12 @@
         const cd = 24*60*60*1000;
         const ready = (Date.now() - last) > cd;
         document.getElementById('b-btn').disabled = !ready;
-        document.getElementById('b-timer').innerText = ready ? "Бонус готов!" : "Завтра!";
+        document.getElementById('b-timer').innerText = ready ? "Бонус готов!" : "Заходите завтра";
     }
 
     window.changeNick = async () => {
         const val = document.getElementById('n-input').value.trim();
         if(val) { await updateDoc(userRef, { name: val }); sync(); }
-        else { tg.showAlert("Ник не может быть пустым!"); }
     };
 
     window.loadInv = async () => {
@@ -201,7 +232,7 @@
         list.innerHTML = (s.data()?.inventory || []).reverse().map(i => `
             <div class="list-item">
                 <div><b>${i.title}</b><br><small>${i.date}</small></div>
-                ${i.used ? '<span>Ok</span>' : `<button onclick="use(${i.id})" style="color:gold;border:1px solid gold;background:none;padding:5px;">ИСПОЛЬЗОВАТЬ</button>`}
+                ${i.used ? '<span>Использовано</span>' : `<button onclick="use(${i.id})" style="color:gold;border:1px solid gold;background:none;padding:5px;border-radius:5px;">ИСПОЛЬЗОВАТЬ</button>`}
             </div>`).join('');
     };
 
@@ -214,8 +245,10 @@
     window.loadTop = async () => {
         const q = query(collection(db, "players"), orderBy("stars", "desc"), limit(10));
         const s = await getDocs(q);
-        document.getElementById('leaderboard').innerHTML = s.docs.map((doc, i) => `
-            <div class="list-item"><div>#${i+1} ${doc.data().name}</div><b>${doc.data().stars || 0} ⭐</b></div>`).join('');
+        document.getElementById('leaderboard').innerHTML = s.docs.map((doc, i) => {
+            const d = doc.data();
+            return `<div class="list-item"><div>#${i+1} ${d.name || "Игрок"}</div><b>${d.stars || 0} ⭐</b></div>`;
+        }).join('');
     };
 
     sync();
