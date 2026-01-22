@@ -12,13 +12,10 @@
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow-x: hidden; }
         
-        /* Фиксированная шапка */
         .header { position: sticky; top: 0; background: var(--card); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; z-index: 1000; }
-        .user-info { display: flex; flex-direction: column; }
         .user-nick { font-weight: bold; color: var(--gold); font-size: 18px; }
         .user-balance { font-size: 14px; color: #fff; }
 
-        /* Навигация */
         .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #333; z-index: 1000; }
         .nav-item { color: var(--sub); font-size: 10px; display: flex; flex-direction: column; align-items: center; border: none; background: none; flex: 1; }
         .nav-item.active { color: var(--gold); }
@@ -28,15 +25,16 @@
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* РУЛЕТКА (Анимация прокрутки) */
+        /* РУЛЕТКА */
         .roulette-container { position: relative; width: 100%; height: 120px; background: #111; border-radius: 15px; margin: 20px 0; overflow: hidden; border: 2px solid #333; display: none; }
         .roulette-line { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: var(--gold); z-index: 10; box-shadow: 0 0 10px var(--gold); }
         .roulette-track { display: flex; position: absolute; left: 0; top: 0; height: 100%; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
         .roulette-item { min-width: 100px; height: 100%; display: flex; align-items: center; justify-content: center; background: #1a1a1a; border-right: 1px solid #222; font-size: 12px; text-align: center; padding: 5px; box-sizing: border-box; }
 
-        /* Стили элементов */
         .glass { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #333; text-align: center; }
-        .btn-main { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; }
+        .btn-main { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-main:disabled { background: #444; color: #888; cursor: not-allowed; }
+        
         .item-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
         .btn-use { background: none; border: 1px solid var(--gold); color: var(--gold); padding: 8px 12px; border-radius: 8px; font-size: 12px; }
     </style>
@@ -45,7 +43,7 @@
 
     <div class="header">
         <div class="user-info">
-            <span class="user-nick" id="h-nick">Загрузка...</span>
+            <span class="user-nick" id="h-nick">...</span>
             <span class="user-balance" id="h-stars">0 ⭐</span>
         </div>
         <div style="font-size: 24px;">🎮</div>
@@ -60,12 +58,10 @@
         <h2>Кейс Клуба</h2>
         <div class="glass">
             <div id="case-static" style="font-size: 80px; margin-bottom: 20px;">🎁</div>
-            
             <div id="roulette" class="roulette-container">
                 <div class="roulette-line"></div>
                 <div id="track" class="roulette-track"></div>
             </div>
-
             <p>Стоимость: <b style="color:var(--gold)">500 ⭐</b></p>
             <button class="btn-main" id="open-btn" onclick="startRoulette()">ОТКРЫТЬ КЕЙС</button>
         </div>
@@ -77,17 +73,20 @@
     </div>
 
     <div id="p-bonuses" class="page">
-        <h2>Бонусы</h2>
+        <h2>Ежедневный Бонус</h2>
         <div class="glass">
-            <button class="btn-main" onclick="claimFree()">ПОЛУЧИТЬ +50 ⭐</button>
+            <p id="bonus-timer" style="font-size: 14px; margin-bottom: 15px; color: var(--sub);">Вы можете получать +50 ⭐ каждые 24 часа</p>
+            <button class="btn-main" id="claim-btn" onclick="claimFree()">ЗАБРАТЬ 50 ⭐</button>
         </div>
     </div>
 
     <div id="p-profile" class="page">
         <h2>Профиль</h2>
         <div class="glass" style="margin-bottom:20px;">
-            <input type="text" id="nick-input" placeholder="Новый ник" style="background:#222; border:none; color:#fff; padding:10px; border-radius:8px; width:70%;">
-            <button onclick="saveNick()" style="color:var(--gold); background:none; border:none; font-weight:bold;">OK</button>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="nick-input" placeholder="Введите ник" style="background:#222; border:none; color:#fff; padding:12px; border-radius:8px; flex-grow: 1;">
+                <button onclick="saveNick()" style="color:var(--gold); background:none; border:none; font-weight:bold; cursor: pointer;">OK</button>
+            </div>
         </div>
         <h3>Мой инвентарь</h3>
         <div id="inventory-list"></div>
@@ -103,7 +102,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, increment, arrayUnion, collection, query, orderBy, limit, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, increment, arrayUnion, collection, query, orderBy, limit, getDocs, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBk4HzLYN19C4V7SyGMU1d1z33I98X5TDI",
@@ -117,15 +116,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const tg = window.Telegram.WebApp;
-    const uid = tg.initDataUnsafe?.user?.id.toString() || "test_id";
+    const uid = tg.initDataUnsafe?.user?.id.toString() || "test_user_id";
     const userRef = doc(db, "players", uid);
 
-    const prizes = [
-        "6ч VIP", "6ч STANDART", "500 Звезд", "450 Звезд", "400 Звезд", 
-        "3ч VIP", "3ч STANDART", "350 Звезд", "300 Звезд", "1ч VIP", 
-        "1ч STANDART", "ПС 5 - 1ч", "250 Звезд", "ПС 4 - 1ч", 
-        "200 Звезд", "150 Звезд", "100 Звезд", "50 Звезд"
-    ];
+    const prizes = ["6ч VIP", "6ч STANDART", "500 Звезд", "450 Звезд", "400 Звезд", "3ч VIP", "3ч STANDART", "350 Звезд", "300 Звезд", "1ч VIP", "1ч STANDART", "ПС 5 - 1ч", "250 Звезд", "ПС 4 - 1ч", "200 Звезд", "150 Звезд", "100 Звезд", "50 Звезд"];
 
     window.tab = (name, el) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -134,14 +128,61 @@
         el.classList.add('active');
         if(name === 'profile') loadInventory();
         if(name === 'top') loadTop();
+        if(name === 'bonuses') checkBonusTime();
     };
 
     async function sync() {
         const snap = await getDoc(userRef);
-        const d = snap.data() || { name: "Игрок", stars: 0 };
-        document.getElementById('h-nick').innerText = d.name;
-        document.getElementById('h-stars').innerText = d.stars + ' ⭐';
+        if(!snap.exists()) {
+            await setDoc(userRef, { name: tg.initDataUnsafe?.user?.first_name || "Игрок", stars: 0, inventory: [], lastBonus: 0 });
+            location.reload();
+            return;
+        }
+        const d = snap.data();
+        document.getElementById('h-nick').innerText = d.name || "Игрок";
+        document.getElementById('h-stars').innerText = (d.stars || 0) + ' ⭐';
+        document.getElementById('nick-input').value = d.name || "";
     }
+
+    async function checkBonusTime() {
+        const snap = await getDoc(userRef);
+        const last = snap.data()?.lastBonus?.toMillis() || 0;
+        const now = Date.now();
+        const diff = now - last;
+        const cooldown = 24 * 60 * 60 * 1000;
+
+        if (diff < cooldown) {
+            const remaining = cooldown - diff;
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            document.getElementById('claim-btn').disabled = true;
+            document.getElementById('bonus-timer').innerText = `Следующий бонус через ${hours}ч ${mins}м`;
+        } else {
+            document.getElementById('claim-btn').disabled = false;
+            document.getElementById('bonus-timer').innerText = "Ваш ежедневный бонус готов!";
+        }
+    }
+
+    window.claimFree = async () => {
+        await updateDoc(userRef, { 
+            stars: increment(50), 
+            lastBonus: serverTimestamp() 
+        });
+        tg.showAlert("Вы получили 50 ⭐!");
+        sync();
+        checkBonusTime();
+    };
+
+    window.saveNick = async () => {
+        const nick = document.getElementById('nick-input').value.trim();
+        if(!nick) {
+            tg.showAlert("Ник не может быть пустым!");
+            return;
+        }
+        await updateDoc(userRef, { name: nick });
+        tg.showAlert("Ник успешно изменен!");
+        sync();
+    };
 
     window.startRoulette = async () => {
         const snap = await getDoc(userRef);
@@ -153,20 +194,16 @@
         roul.style.display = 'block';
         document.getElementById('open-btn').disabled = true;
 
-        // Генерируем ленту (40 элементов для длины)
         track.innerHTML = '';
-        let items = [];
-        for(let i=0; i<40; i++) {
+        for(let i=0; i<45; i++) {
             const p = prizes[Math.floor(Math.random() * prizes.length)];
-            items.push(p);
             track.innerHTML += `<div class="roulette-item">${p}</div>`;
         }
 
         const winPrize = prizes[Math.floor(Math.random() * prizes.length)];
-        const stopIndex = 35; // Остановимся на 35-м элементе
+        const stopIndex = 40;
         track.children[stopIndex].innerText = winPrize;
         track.children[stopIndex].style.color = 'gold';
-        track.children[stopIndex].style.fontWeight = 'bold';
 
         setTimeout(() => {
             const offset = (stopIndex * 100) - (roul.offsetWidth / 2) + 50;
@@ -176,13 +213,11 @@
         setTimeout(async () => {
             const item = { id: Date.now(), name: winPrize, date: new Date().toLocaleDateString(), used: false };
             let starAdd = winPrize.includes("Звезд") ? parseInt(winPrize) : 0;
-            
             await updateDoc(userRef, {
                 stars: increment(-500 + starAdd),
                 inventory: arrayUnion(item),
                 openCount: increment(1)
             });
-
             tg.showAlert("Вы выиграли: " + winPrize);
             location.reload(); 
         }, 4500);
@@ -194,28 +229,23 @@
         list.innerHTML = "";
         const inv = snap.data()?.inventory || [];
         inv.reverse().forEach(i => {
+            if(!i.name) return;
             list.innerHTML += `<div class="item-card">
-                <div><b>${i.name || "Приз"}</b><br><small>${i.date}</small></div>
-                ${i.used ? '<span>Использовано</span>' : `<button class="btn-use" onclick="useItem(${i.id})">ИСПОЛЬЗОВАТЬ</button>`}
+                <div><b>${i.name}</b><br><small>${i.date}</small></div>
+                ${i.used ? '<span style="color:#555">Использовано</span>' : `<button class="btn-use" onclick="useItem(${i.id})">ИСПОЛЬЗОВАТЬ</button>`}
             </div>`;
         });
     };
 
     window.useItem = async (id) => {
-        const snap = await getDoc(userRef);
-        const newInv = snap.data().inventory.map(i => i.id === id ? {...i, used: true} : i);
-        await updateDoc(userRef, { inventory: newInv });
-        loadInventory();
-    };
-
-    window.claimFree = async () => {
-        await setDoc(userRef, { stars: increment(50) }, { merge: true });
-        sync();
-    };
-
-    window.saveNick = async () => {
-        const n = document.getElementById('nick-input').value;
-        if(n) { await updateDoc(userRef, { name: n }); sync(); }
+        tg.showConfirm("Использовать приз?", async (ok) => {
+            if(ok) {
+                const snap = await getDoc(userRef);
+                const inv = snap.data().inventory.map(i => i.id === id ? {...i, used: true} : i);
+                await updateDoc(userRef, { inventory: inv });
+                loadInventory();
+            }
+        });
     };
 
     window.loadTop = async () => {
@@ -225,7 +255,7 @@
         l.innerHTML = "";
         let i = 1;
         s.forEach(doc => {
-            l.innerHTML += `<div class="item-card"><div>#${i} ${doc.data().name}</div><b>${doc.data().stars} ⭐</b></div>`;
+            l.innerHTML += `<div class="item-card"><div>#${i} ${doc.data().name || "Игрок"}</div><b>${doc.data().stars || 0} ⭐</b></div>`;
             i++;
         });
     };
