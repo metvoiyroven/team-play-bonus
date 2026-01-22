@@ -3,81 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Team Play Club</title>
+    <title>Team Play Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --main: #ffd700; --bg: #0f0f0f; --card: #1a1a1a; --text: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 70px; }
+        :root { 
+            --gold: #ffd700; --bg: #0a0a0a; --card: #161616; --text: #ffffff; --sub: #888888;
+            --accent: linear-gradient(45deg, #ffd700, #ffae00);
+        }
+        body.light-theme {
+            --bg: #f5f5f5; --card: #ffffff; --text: #1a1a1a; --sub: #666666;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; }
         
-        /* Навигация */
-        .nav { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; z-index: 1000; }
-        .nav-btn { color: #888; font-size: 12px; display: flex; flex-direction: column; align-items: center; cursor: pointer; border: none; background: none; }
-        .nav-btn.active { color: var(--main); }
+        /* Navigation */
+        .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); z-index: 1000; }
+        .nav-item { color: var(--sub); font-size: 10px; display: flex; flex-direction: column; align-items: center; border: none; background: none; flex: 1; transition: 0.2s; }
+        .nav-item.active { color: var(--gold); transform: translateY(-3px); }
+        .nav-icon { font-size: 22px; margin-bottom: 4px; }
 
-        /* Разделы */
-        .page { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .page { display: none; padding: 20px; animation: slideUp 0.4s ease-out; padding-bottom: 100px; }
         .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Карточки */
-        .stat-card { background: var(--card); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 15px; border: 1px solid #333; }
-        .val { font-size: 24px; font-weight: bold; color: var(--main); display: block; }
+        .header-stars { text-align: center; padding: 20px; font-size: 28px; font-weight: 900; color: var(--gold); }
 
-        /* Кейсы */
-        .case-visual { width: 180px; height: 180px; background: linear-gradient(45deg, #1a1a1a, #222); border: 2px dashed var(--main); border-radius: 20px; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 60px; transition: 0.3s; }
-        .spinning { animation: shake 0.5s infinite; }
-        @keyframes shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } }
+        /* Case Box */
+        .glass { background: var(--card); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .box-visual { width: 160px; height: 160px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 70px; cursor: pointer; transition: 0.3s; }
+        .box-visual.opening { animation: shake 0.5s infinite; }
+        @keyframes shake { 0% { transform: rotate(0); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0); } }
 
-        /* Списки */
-        .item { background: var(--card); margin: 10px 0; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
-        button { background: var(--main); color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; }
-        button:disabled { background: #555; }
-
-        .win-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        /* Items */
+        .item-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-main { background: var(--accent); color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: 800; width: 100%; margin-top: 10px; cursor: pointer; }
+        .btn-use { background: #333; color: var(--gold); border: 1px solid var(--gold); padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .input-group { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; margin: 10px 0; display: flex; }
+        input { background: none; border: none; color: var(--text); padding: 5px; flex: 1; outline: none; font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div id="page-main" class="page active">
-    <h2>Твой Профиль</h2>
-    <div class="stat-card">Твой баланс <span id="balance" class="val">0 BP</span></div>
-    <div class="stat-card">Твои Звезды <span id="stars" class="val">0 ⭐</span></div>
-    <button id="claim-btn">ПОЛУЧИТЬ +10 BP</button>
-</div>
+    <div class="header-stars" id="top-stars">0 ⭐</div>
 
-<div id="page-cases" class="page">
-    <h2>Кейс Клуба</h2>
-    <div id="box" class="case-visual">🎁</div>
-    <p style="text-align:center">Стоимость открытия: <b>100 BP</b></p>
-    <button id="open-btn">ОТКРЫТЬ КЕЙС</button>
-</div>
+    <div id="p-home" class="page active">
+        <h2 style="margin-top:0">Новости</h2>
+        <div class="glass" style="text-align: center; padding: 50px 20px;">
+            <span style="font-size: 50px;">📡</span>
+            <h3 style="color: var(--gold); margin-bottom: 10px;">СКОРО ПОЯВИТСЯ</h3>
+            <p style="color: var(--sub)">Раздел в разработке. Здесь будут акции клуба!</p>
+        </div>
+    </div>
 
-<div id="page-inv" class="page">
-    <h2>Мой Инвентарь</h2>
-    <div id="inv-list">Загрузка...</div>
-</div>
+    <div id="p-games" class="page">
+        <h2>Игры</h2>
+        <div class="glass" style="text-align: center;">
+            <div id="main-box" class="box-visual" onclick="showChances()">🎁</div>
+            <p style="margin: 5px 0;">Нажми на кейс, чтобы увидеть призы</p>
+            <h3 style="color: var(--gold); margin: 15px 0;">Цена: 100 ⭐</h3>
+            <button class="btn-main" onclick="openCase()">ОТКРЫТЬ КЕЙС</button>
+        </div>
+    </div>
 
-<div id="page-top" class="page">
-    <h2>Топ Игроков</h2>
-    <div id="top-list">Загрузка...</div>
-</div>
+    <div id="p-top" class="page">
+        <h2>Рейтинг клуба</h2>
+        <div id="leaderboard-list"></div>
+    </div>
 
-<div class="nav">
-    <button class="nav-btn active" onclick="tab('main')"><span>👤</span>Профиль</button>
-    <button class="nav-btn" onclick="tab('cases')"><span>🎰</span>Кейсы</button>
-    <button class="nav-btn" onclick="tab('inv')"><span>🎒</span>Инвентарь</button>
-    <button class="nav-btn" onclick="tab('top')"><span>🏆</span>Топ</button>
-</div>
+    <div id="p-bonuses" class="page">
+        <h2>Бонусы</h2>
+        <div class="glass" style="text-align: center;">
+            <p>Хочешь накопить на кейс?</p>
+            <button class="btn-main" onclick="claimFree()">ПОЛУЧИТЬ +10 ⭐</button>
+        </div>
+    </div>
 
-<div id="win-screen" class="win-popup">
-    <h1 style="color:var(--main)">ВЫИГРЫШ!</h1>
-    <div id="win-name" style="font-size: 30px; margin: 20px;">ПРИЗ</div>
-    <button style="width:200px" onclick="location.reload()">ЗАБРАТЬ</button>
-</div>
+    <div id="p-profile" class="page">
+        <h2>Профиль</h2>
+        <div class="glass" style="margin-bottom: 20px;">
+            <label style="font-size: 12px; color: var(--sub)">Твой никнейм</label>
+            <div class="input-group">
+                <input type="text" id="username-input" placeholder="Ник...">
+                <button onclick="saveNick()" style="background:none; border:none; color:var(--gold); font-weight:bold;">ОК</button>
+            </div>
+            
+            <label style="font-size: 12px; color: var(--sub)">Активация промокода</label>
+            <div class="input-group">
+                <input type="text" id="promo-input" placeholder="Код...">
+                <button onclick="applyPromo()" style="background:none; border:none; color:var(--gold); font-weight:bold;">ВВЕСТИ</button>
+            </div>
+
+            <button class="btn-main" style="background:#222; color:#fff; border: 1px solid #444;" onclick="toggleTheme()">Сменить тему 🌗</button>
+        </div>
+
+        <h3>Твой инвентарь</h3>
+        <div id="inventory-list"></div>
+    </div>
+
+    <nav class="nav">
+        <button class="nav-item active" onclick="tab('home', this)"><span class="nav-icon">🏠</span>Главная</button>
+        <button class="nav-item" onclick="tab('games', this)"><span class="nav-icon">🎲</span>Игры</button>
+        <button class="nav-item" onclick="tab('top', this)"><span class="nav-icon">🏆</span>Топ</button>
+        <button class="nav-item" onclick="tab('bonuses', this)"><span class="nav-icon">💎</span>Бонусы</button>
+        <button class="nav-item" onclick="tab('profile', this)"><span class="nav-icon">👤</span>Профиль</button>
+    </nav>
+
+    <div id="modal-chances" class="modal">
+        <h2 style="color:var(--gold)">Содержимое кейса:</h2>
+        <div id="chances-list" style="text-align:left; font-size:14px; line-height:1.8;"></div>
+        <button class="btn-main" onclick="document.getElementById('modal-chances').style.display='none'">ЗАКРЫТЬ</button>
+    </div>
+
+    <div id="win-screen" class="modal" style="display:none; justify-content:center; align-items:center; flex-direction:column; text-align:center;">
+        <h1 style="color:var(--gold); font-size:40px; margin:0;">ВЫИГРЫШ!</h1>
+        <div id="win-item-name" style="font-size: 28px; margin: 30px; font-weight:bold;">Приз</div>
+        <button class="btn-main" style="width:200px" onclick="location.reload()">ЗАБРАТЬ</button>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, increment, arrayUnion, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, increment, arrayUnion, collection, query, orderBy, limit, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBk4HzLYN19C4V7SyGMU1d1z33I98X5TDI",
@@ -93,95 +139,156 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const user = tg.initDataUnsafe?.user;
-    const userRef = user ? doc(db, "players", user.id.toString()) : null;
+    const uid = tg.initDataUnsafe?.user?.id.toString() || "test_id";
+    const userRef = doc(db, "players", uid);
 
-    // Переключение вкладок
-    window.tab = (name) => {
+    // ПОЛНЫЙ СПИСОК ПРИЗОВ ИЗ ТВОЕГО ЗАПРОСА
+    const prizes = [
+        { name: "6ч VIP", chance: 1 },
+        { name: "6ч STANDART", chance: 1 },
+        { name: "500 Звезд", chance: 1 },
+        { name: "450 Звезд", chance: 1 },
+        { name: "400 Звезд", chance: 1 },
+        { name: "3ч VIP", chance: 3 },
+        { name: "3ч STANDART", chance: 4 },
+        { name: "350 Звезд", chance: 4 },
+        { name: "300 Звезд", chance: 5 },
+        { name: "1ч VIP", chance: 6 },
+        { name: "1ч STANDART", chance: 10 },
+        { name: "ПС 5 - 1ч", chance: 10 },
+        { name: "250 Звезд", chance: 10 },
+        { name: "ПС 4 - 1ч", chance: 20 },
+        { name: "200 Звезд", chance: 20 },
+        { name: "150 Звезд", chance: 50 },
+        { name: "100 Звезд", chance: 70 },
+        { name: "50 Звезд", chance: 80 }
+    ];
+
+    window.tab = (name, el) => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('page-'+name).classList.add('active');
-        event.currentTarget.classList.add('active');
-        if(name === 'inv') loadInventory();
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('p-'+name).classList.add('active');
+        el.classList.add('active');
         if(name === 'top') loadTop();
+        if(name === 'profile') loadInventory();
     };
 
-    async function updateUI() {
-        if (!userRef) return;
+    async function sync() {
         const snap = await getDoc(userRef);
         if (snap.exists()) {
-            document.getElementById('balance').innerText = (snap.data().points || 0) + ' BP';
-            document.getElementById('stars').innerText = (snap.data().stars || 0) + ' ⭐';
+            const d = snap.data();
+            document.getElementById('top-stars').innerText = (d.stars || 0) + ' ⭐';
+            if(!document.getElementById('username-input').value) document.getElementById('username-input').value = d.name || "";
+        } else {
+            await setDoc(userRef, { name: tg.initDataUnsafe?.user?.first_name || "Игрок", stars: 100, inventory: [], openCount: 0 });
         }
     }
 
-    document.getElementById('claim-btn').onclick = async () => {
-        await setDoc(userRef, { name: user.username || user.first_name, points: increment(10) }, { merge: true });
-        tg.HapticFeedback.impactOccurred('light');
-        updateUI();
+    window.showChances = () => {
+        const list = document.getElementById('chances-list');
+        list.innerHTML = prizes.map(p => `<div>• ${p.name} <span style="color:gray;float:right;">${p.chance}%</span></div>`).join('');
+        document.getElementById('modal-chances').style.display = 'block';
     };
 
-    // ПРИЗЫ И ШАНСЫ (Логика: от редкого к частому)
-    const prizes = [
-        { name: "500 Звезд", chance: 1, type: "stars", val: 500 },
-        { name: "450 Звезд", chance: 1, type: "stars", val: 450 },
-        { name: "6ч VIP", chance: 1, type: "item" },
-        { name: "6ч STANDART", chance: 1, type: "item" },
-        { name: "3ч VIP", chance: 3, type: "item" },
-        { name: "3ч STANDART", chance: 4, type: "item" },
-        { name: "1ч VIP", chance: 6, type: "item" },
-        { name: "1ч STANDART", chance: 10, type: "item" },
-        { name: "ПС 5 - 1ч", chance: 10, type: "item" },
-        { name: "ПС 4 - 1ч", chance: 20, type: "item" },
-        { name: "100 Звезд", chance: 70, type: "stars", val: 100 },
-        { name: "50 Звезд", chance: 100, type: "stars", val: 50 }
-    ];
-
-    document.getElementById('open-btn').onclick = async () => {
+    window.openCase = async () => {
         const snap = await getDoc(userRef);
-        if ((snap.data().points || 0) < 100) { tg.showAlert("Нужно 100 BP!"); return; }
+        if((snap.data().stars || 0) < 100) { tg.showAlert("Мало звезд! Нужно 100 ⭐"); return; }
 
-        document.getElementById('box').classList.add('spinning');
-        
+        const box = document.getElementById('main-box');
+        box.classList.add('opening');
+
         setTimeout(async () => {
             const rand = Math.random() * 100;
-            let win = prizes.find(p => rand <= p.chance) || prizes[prizes.length-1];
+            // Сортируем от самого редкого к частому для логики выпадения
+            const sortedPrizes = [...prizes].sort((a,b) => a.chance - b.chance);
+            let win = sortedPrizes.find(p => rand <= p.chance) || sortedPrizes[sortedPrizes.length-1];
 
-            const upd = { points: increment(-100) };
-            if (win.type === "stars") upd.stars = increment(win.val);
-            if (win.type === "item") upd.inventory = arrayUnion({ name: win.name, date: new Date().toLocaleDateString() });
-
-            await setDoc(userRef, upd, { merge: true });
+            const item = { id: Date.now(), name: win.name, date: new Date().toLocaleDateString(), used: false };
             
-            document.getElementById('box').classList.remove('spinning');
-            document.getElementById('win-name').innerText = win.name;
+            // Если выиграли звезды напрямую
+            let starBonus = 0;
+            if(win.name.includes("Звезд")) starBonus = parseInt(win.name);
+
+            await updateDoc(userRef, {
+                stars: increment(-100 + starBonus),
+                openCount: increment(1),
+                inventory: arrayUnion(item)
+            });
+
+            box.classList.remove('opening');
+            document.getElementById('win-item-name').innerText = win.name;
             document.getElementById('win-screen').style.display = 'flex';
             tg.HapticFeedback.notificationOccurred('success');
-        }, 1500);
+        }, 2000);
     };
 
-    async function loadInventory() {
+    window.loadInventory = async () => {
         const snap = await getDoc(userRef);
-        const list = document.getElementById('inv-list');
-        list.innerHTML = '';
-        if (snap.exists() && snap.data().inventory) {
-            snap.data().inventory.forEach(i => {
-                list.innerHTML += `<div class="item"><span>${i.name}</span><small>${i.date}</small></div>`;
-            });
-        } else { list.innerHTML = 'Пусто... Открой свой первый кейс!'; }
-    }
+        const list = document.getElementById('inventory-list');
+        list.innerHTML = "";
+        const inv = snap.data().inventory || [];
+        inv.reverse().forEach(item => {
+            list.innerHTML += `<div class="item-card">
+                <div><b>${item.name}</b><br><small style="color:var(--sub)">${item.date}</small></div>
+                ${item.used ? '<span style="color:var(--sub)">Использовано</span>' : `<button class="btn-use" onclick="useItem(${item.id})">ИСПОЛЬЗОВАТЬ</button>`}
+            </div>`;
+        });
+    };
 
-    async function loadTop() {
+    window.useItem = async (id) => {
+        tg.showConfirm("Администратор клуба должен подтвердить использование приза. Продолжить?", async (ok) => {
+            if(ok) {
+                const snap = await getDoc(userRef);
+                const newInv = snap.data().inventory.map(i => i.id === id ? {...i, used: true} : i);
+                await updateDoc(userRef, { inventory: newInv });
+                loadInventory();
+            }
+        });
+    };
+
+    window.loadTop = async () => {
         const q = query(collection(db, "players"), orderBy("stars", "desc"), limit(10));
         const snap = await getDocs(q);
-        const list = document.getElementById('top-list');
-        list.innerHTML = '';
-        snap.forEach((doc, i) => {
-            list.innerHTML += `<div class="item"><span>#${i+1} ${doc.data().name}</span><b>${doc.data().stars || 0} ⭐</b></div>`;
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = "";
+        let i = 1;
+        snap.forEach(d => {
+            const data = d.data();
+            list.innerHTML += `<div class="item-card">
+                <div><b>#${i}</b> ${data.name || "Игрок"}</div>
+                <div style="text-align:right"><b>${data.stars || 0} ⭐</b><br><small style="font-size:10px">Кейсов: ${data.openCount || 0}</small></div>
+            </div>`;
+            i++;
         });
-    }
+    };
 
-    updateUI();
+    window.claimFree = async () => {
+        await updateDoc(userRef, { stars: increment(10) });
+        tg.showAlert("Вы получили 10 ⭐!");
+        sync();
+    };
+
+    window.saveNick = async () => {
+        const nick = document.getElementById('username-input').value;
+        if(nick) {
+            await updateDoc(userRef, { name: nick });
+            tg.showAlert("Ник сохранен!");
+        }
+    };
+
+    window.applyPromo = async () => {
+        const code = document.getElementById('promo-input').value.toUpperCase();
+        if(code === 'START') {
+            await updateDoc(userRef, { stars: increment(1000) });
+            tg.showAlert("Промокод START: +1000 ⭐!");
+            document.getElementById('promo-input').value = "";
+            sync();
+        } else { tg.showAlert("Неверный код"); }
+    };
+
+    window.toggleTheme = () => { document.body.classList.toggle('light-theme'); };
+
+    sync();
 </script>
 </body>
 </html>
