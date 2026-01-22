@@ -3,95 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Play Bonus</title>
+    <title>Team Play Casino</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Стиль под тему Телеграма */
-        body {
-            font-family: sans-serif;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            text-align: center;
-            padding: 20px;
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #fff; text-align: center; margin: 0; padding: 20px; }
+        .card { background: #1a1a1a; border: 2px solid #333; border-radius: 20px; padding: 20px; box-shadow: 0 0 20px rgba(0,255,0,0.1); }
+        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; background: #252525; padding: 10px; border-radius: 10px; }
+        .stat-item { font-size: 14px; }
+        .stat-value { display: block; font-size: 20px; font-weight: bold; color: #00ff00; }
+        
+        .case-visual { width: 150px; height: 150px; margin: 20px auto; background: linear-gradient(45deg, #111, #222); border: 3px solid #ffd700; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 50px; cursor: pointer; transition: 0.3s; }
+        .case-visual:active { transform: scale(0.9); }
+        .case-visual.spinning { animation: shake 0.5s infinite; }
+
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
         }
-        .bonus-card {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-        }
-        button {
-            background: var(--tg-theme-button-color, #248bed);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-        }
+
+        button { background: #ffd700; color: #000; border: none; padding: 15px 25px; border-radius: 12px; font-weight: bold; font-size: 18px; width: 100%; cursor: pointer; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        
+        .win-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .win-overlay h2 { color: #ffd700; }
     </style>
 </head>
 <body>
 
-    <h1>Team Play Bonus 🏆</h1>
-    <div class="bonus-card">
-        <p id="user-info">Загрузка данных пользователя...</p>
-        <h2 id="balance">Баланс: 0 BP</h2>
-        <button id="claim-btn">Получить бонус</button>
+<div class="card">
+    <div class="stats">
+        <div class="stat-item">Звезды: <span id="stars" class="stat-value">0</span></div>
+        <div class="stat-item">Бонусы: <span id="balance" class="stat-value">0</span></div>
     </div>
+    
+    <div id="case" class="case-visual">🎁</div>
+    <p>Цена открытия: <b>100 BP</b></p>
+    <button id="open-btn">ОТКРЫТЬ КЕЙС</button>
+</div>
 
-    <script type="module">
-        // 1. ПОДКЛЮЧЕНИЕ FIREBASE
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<div id="win-screen" class="win-overlay">
+    <h2>ПОЗДРАВЛЯЕМ!</h2>
+    <div id="win-text" style="font-size: 24px; margin: 20px;">ПРИЗ</div>
+    <button onclick="closeWin()">ЗАБРАТЬ</button>
+</div>
 
-        // ВСТАВЬ СВОИ ДАННЫЕ ИЗ ВКЛАДКИ FIREBASE (Project Settings -> Web App)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBk4hzLYNl9C4V7SyBMUlGis23IJ8x5TDI",
-            authDomain: "teamplaybonus.firebaseapp.com",
-            projectId: "teamplaybonus",
-            storageBucket: "teamplaybonus.firebasestorage.app",
-            messagingSenderId: "968832925102",
-            appId: "1:968832925102:web:675d627c0e0733dc595c3f"
-        };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const tg = window.Telegram.WebApp;
+    // ВСТАВЬ СВОЙ КОНФИГ ИЗ СТАРОГО ФАЙЛА
+    const firebaseConfig = {
+        apiKey: "ТВОЙ_API_KEY",
+        authDomain: "teamplaybonus.firebaseapp.com",
+        projectId: "teamplaybonus",
+        storageBucket: "teamplaybonus.appspot.com",
+        messagingSenderId: "...",
+        appId: "..."
+    };
 
-        tg.expand(); // Раскрыть на весь экран
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
-        const user = tg.initDataUnsafe?.user;
+    const user = tg.initDataUnsafe?.user;
+    const userRef = user ? doc(db, "players", user.id.toString()) : null;
 
-        if (user) {
-            document.getElementById('user-info').innerText = `Игрок: ${user.first_name}`;
-            
-            // Ссылка на документ пользователя в базе
-            const userRef = doc(db, "players", user.id.toString());
+    const prizes = [
+        { name: "500 Звезд", chance: 1, type: "stars", val: 500 },
+        { name: "450 Звезд", chance: 1, type: "stars", val: 450 },
+        { name: "400 Звезд", chance: 1, type: "stars", val: 400 },
+        { name: "6ч VIP", chance: 1, type: "item" },
+        { name: "6ч STANDART", chance: 1, type: "item" },
+        { name: "3ч VIP", chance: 3, type: "item" },
+        { name: "350 Звезд", chance: 4, type: "stars", val: 350 },
+        { name: "3ч STANDART", chance: 4, type: "item" },
+        { name: "300 Звезд", chance: 5, type: "stars", val: 300 },
+        { name: "1ч VIP", chance: 6, type: "item" },
+        { name: "1ч STANDART", chance: 10, type: "item" },
+        { name: "ПС 5 - 1ч", chance: 10, type: "item" },
+        { name: "250 Звезд", chance: 10, type: "stars", val: 250 },
+        { name: "200 Звезд", chance: 20, type: "stars", val: 200 },
+        { name: "ПС 4 - 1ч", chance: 20, type: "item" },
+        { name: "150 Звезд", chance: 50, type: "stars", val: 150 },
+        { name: "100 Звезд", chance: 70, type: "stars", val: 100 },
+        { name: "50 Звезд", chance: 80, type: "stars", val: 50 }
+    ];
 
-            // Функция обновления баланса на экране
-            async function updateDisplay() {
-                const snap = await getDoc(userRef);
-                if (snap.exists()) {
-                    document.getElementById('balance').innerText = `Баланс: ${snap.data().points} BP`;
+    async function loadStats() {
+        if (!userRef) return;
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+            const data = snap.data();
+            document.getElementById('balance').innerText = data.points || 0;
+            document.getElementById('stars').innerText = data.stars || 0;
+        }
+    }
+
+    window.closeWin = () => {
+        document.getElementById('win-screen').style.display = 'none';
+        loadStats();
+    };
+
+    document.getElementById('open-btn').onclick = async () => {
+        const snap = await getDoc(userRef);
+        if (snap.data().points < 100) {
+            alert("Недостаточно бонусов (нужно 100 BP)");
+            return;
+        }
+
+        // Анимация
+        const caseEl = document.getElementById('case');
+        caseEl.classList.add('spinning');
+        document.getElementById('open-btn').disabled = true;
+
+        setTimeout(async () => {
+            const rand = Math.random() * 100;
+            let win = prizes[prizes.length - 1]; // Дефолтный приз
+
+            for (let p of prizes) {
+                if (rand <= p.chance) {
+                    win = p;
+                    break;
                 }
             }
 
-            // Клик по кнопке "Получить бонус"
-            document.getElementById('claim-btn').onclick = async () => {
-                await setDoc(userRef, {
-                    name: user.first_name,
-                    points: increment(10) // Добавляем 10 очков
-                }, { merge: true });
-                
-                tg.HapticFeedback.notificationOccurred('success'); // Вибрация
-                updateDisplay();
-            };
+            // Запись в базу
+            const updateData = { points: increment(-100) };
+            if (win.type === "stars") updateData.stars = increment(win.val);
+            if (win.type === "item") updateData.inventory = arrayUnion(win.name);
 
-            updateDisplay();
-        } else {
-            document.getElementById('user-info').innerText = "Запустите через Telegram!";
-        }
-    </script>
+            await setDoc(userRef, updateData, { merge: true });
+
+            caseEl.classList.remove('spinning');
+            document.getElementById('win-text').innerText = win.name;
+            document.getElementById('win-screen').style.display = 'flex';
+            document.getElementById('open-btn').disabled = false;
+            tg.HapticFeedback.notificationOccurred('success');
+        }, 1500);
+    };
+
+    loadStats();
+</script>
+
 </body>
 </html>
