@@ -21,22 +21,30 @@
         .nav-item.active { color: var(--gold); }
         .nav-icon { font-size: 20px; margin-bottom: 4px; }
 
-        .page { display: none; padding: 20px; padding-bottom: 100px; animation: fadeIn 0.3s; }
+        .page { display: none; padding: 20px; padding-bottom: 100px; animation: fadeIn 0.2s; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* РУЛЕТКА */
-        .roulette-container { position: relative; width: 100%; height: 120px; background: #111; border-radius: 15px; margin: 20px 0; overflow: hidden; border: 2px solid #333; display: none; }
+        /* Кейс и Содержимое */
+        .case-card { background: var(--card); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
+        .case-card:active { transform: scale(0.95); }
+        
+        .prize-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .prize-mini { background: #222; padding: 10px; border-radius: 10px; font-size: 10px; text-align: center; border: 1px solid #333; }
+
+        /* Рулетка */
+        .roulette-container { position: relative; width: 100%; height: 100px; background: #111; border-radius: 15px; margin: 20px 0; overflow: hidden; border: 2px solid #333; display: none; }
         .roulette-line { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: var(--gold); z-index: 10; box-shadow: 0 0 10px var(--gold); }
         .roulette-track { display: flex; position: absolute; left: 0; top: 0; height: 100%; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
         .roulette-item { min-width: 100px; height: 100%; display: flex; align-items: center; justify-content: center; background: #1a1a1a; border-right: 1px solid #222; font-size: 12px; text-align: center; padding: 5px; box-sizing: border-box; }
 
-        .glass { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #333; text-align: center; }
-        .btn-main { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .btn-main:disabled { background: #444; color: #888; cursor: not-allowed; }
+        .btn-main { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+        .btn-promo { background: #333; color: #fff; border: none; padding: 12px; border-radius: 12px; width: 100%; cursor: pointer; }
         
         .item-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
-        .btn-use { background: none; border: 1px solid var(--gold); color: var(--gold); padding: 8px 12px; border-radius: 8px; font-size: 12px; }
+        
+        /* Экран кейса (всплывающий) */
+        #case-detail-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -51,19 +59,40 @@
 
     <div id="p-home" class="page active">
         <h2>Новости</h2>
-        <div class="glass"><h3>СКОРО ПОЯВИТСЯ</h3></div>
+        <div class="case-card"><h3>СКОРО ПОЯВИТСЯ</h3></div>
     </div>
 
     <div id="p-games" class="page">
-        <h2>Кейс Клуба</h2>
-        <div class="glass">
-            <div id="case-static" style="font-size: 80px; margin-bottom: 20px;">🎁</div>
-            <div id="roulette" class="roulette-container">
-                <div class="roulette-line"></div>
-                <div id="track" class="roulette-track"></div>
+        <h2>Магазин кейсов</h2>
+        <div class="case-card" onclick="openCaseDetail()">
+            <div style="font-size: 60px;">🎁</div>
+            <h3 style="margin: 10px 0;">Кейс Клуба</h3>
+            <p style="color: var(--gold); margin: 0;">500 ⭐ / Промокод</p>
+            <p style="font-size: 12px; color: var(--sub); margin-top: 10px;">Нажми, чтобы посмотреть содержимое</p>
+        </div>
+    </div>
+
+    <div id="case-detail-view">
+        <div onclick="closeCaseDetail()" style="color: var(--gold); margin-bottom: 20px; cursor: pointer;">← Назад в меню</div>
+        <h2 style="text-align: center;">Кейс Клуба</h2>
+        <div style="font-size: 80px; text-align: center; margin-bottom: 10px;">🎁</div>
+        
+        <p style="color: var(--sub); font-size: 14px; text-align: center;">Возможные призы:</p>
+        <div class="prize-grid" id="prizes-display"></div>
+
+        <div id="roulette" class="roulette-container">
+            <div class="roulette-line"></div>
+            <div id="track" class="roulette-track"></div>
+        </div>
+
+        <button class="btn-main" id="open-btn-stars" onclick="startRoulette('stars')">ОТКРЫТЬ ЗА 500 ⭐</button>
+        
+        <div style="background: #222; padding: 15px; border-radius: 15px;">
+            <p style="margin: 0 0 10px 0; font-size: 14px;">Есть промокод?</p>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="case-promo-input" placeholder="Введите код" style="background:#111; border:none; color:#fff; padding:10px; border-radius:8px; flex-grow: 1;">
+                <button onclick="startRoulette('promo')" style="background:var(--gold); border:none; border-radius:8px; padding: 0 15px; font-weight: bold;">OK</button>
             </div>
-            <p>Стоимость: <b style="color:var(--gold)">500 ⭐</b></p>
-            <button class="btn-main" id="open-btn" onclick="startRoulette()">ОТКРЫТЬ КЕЙС</button>
         </div>
     </div>
 
@@ -74,18 +103,18 @@
 
     <div id="p-bonuses" class="page">
         <h2>Ежедневный Бонус</h2>
-        <div class="glass">
-            <p id="bonus-timer" style="font-size: 14px; margin-bottom: 15px; color: var(--sub);">Вы можете получать +50 ⭐ каждые 24 часа</p>
+        <div class="case-card">
+            <p id="bonus-timer" style="font-size: 14px; margin-bottom: 15px; color: var(--sub);">Ждите...</p>
             <button class="btn-main" id="claim-btn" onclick="claimFree()">ЗАБРАТЬ 50 ⭐</button>
         </div>
     </div>
 
     <div id="p-profile" class="page">
         <h2>Профиль</h2>
-        <div class="glass" style="margin-bottom:20px;">
+        <div class="case-card" style="margin-bottom:20px;">
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="nick-input" placeholder="Введите ник" style="background:#222; border:none; color:#fff; padding:12px; border-radius:8px; flex-grow: 1;">
-                <button onclick="saveNick()" style="color:var(--gold); background:none; border:none; font-weight:bold; cursor: pointer;">OK</button>
+                <input type="text" id="nick-input" placeholder="Ник" style="background:#222; border:none; color:#fff; padding:12px; border-radius:8px; flex-grow: 1;">
+                <button onclick="saveNick()" style="color:var(--gold); background:none; border:none; font-weight:bold;">OK</button>
             </div>
         </div>
         <h3>Мой инвентарь</h3>
@@ -116,7 +145,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const tg = window.Telegram.WebApp;
-    const uid = tg.initDataUnsafe?.user?.id.toString() || "test_user_id";
+    const uid = tg.initDataUnsafe?.user?.id.toString() || "test_user";
     const userRef = doc(db, "players", uid);
 
     const prizes = ["6ч VIP", "6ч STANDART", "500 Звезд", "450 Звезд", "400 Звезд", "3ч VIP", "3ч STANDART", "350 Звезд", "300 Звезд", "1ч VIP", "1ч STANDART", "ПС 5 - 1ч", "250 Звезд", "ПС 4 - 1ч", "200 Звезд", "150 Звезд", "100 Звезд", "50 Звезд"];
@@ -126,84 +155,53 @@
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('p-'+name).classList.add('active');
         el.classList.add('active');
+        closeCaseDetail();
         if(name === 'profile') loadInventory();
         if(name === 'top') loadTop();
         if(name === 'bonuses') checkBonusTime();
     };
 
+    window.openCaseDetail = () => {
+        document.getElementById('case-detail-view').style.display = 'block';
+        const grid = document.getElementById('prizes-display');
+        grid.innerHTML = prizes.map(p => `<div class="prize-mini">${p}</div>`).join('');
+    };
+
+    window.closeCaseDetail = () => {
+        document.getElementById('case-detail-view').style.display = 'none';
+    };
+
     async function sync() {
         const snap = await getDoc(userRef);
-        if(!snap.exists()) {
-            await setDoc(userRef, { name: tg.initDataUnsafe?.user?.first_name || "Игрок", stars: 0, inventory: [], lastBonus: 0 });
-            location.reload();
-            return;
-        }
-        const d = snap.data();
-        document.getElementById('h-nick').innerText = d.name || "Игрок";
-        document.getElementById('h-stars').innerText = (d.stars || 0) + ' ⭐';
-        document.getElementById('nick-input').value = d.name || "";
+        const d = snap.data() || { name: "Игрок", stars: 0 };
+        document.getElementById('h-nick').innerText = d.name;
+        document.getElementById('h-stars').innerText = d.stars + ' ⭐';
+        document.getElementById('nick-input').value = d.name;
     }
 
-    async function checkBonusTime() {
+    window.startRoulette = async (type) => {
         const snap = await getDoc(userRef);
-        const last = snap.data()?.lastBonus?.toMillis() || 0;
-        const now = Date.now();
-        const diff = now - last;
-        const cooldown = 24 * 60 * 60 * 1000;
-
-        if (diff < cooldown) {
-            const remaining = cooldown - diff;
-            const hours = Math.floor(remaining / (1000 * 60 * 60));
-            const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-            document.getElementById('claim-btn').disabled = true;
-            document.getElementById('bonus-timer').innerText = `Следующий бонус через ${hours}ч ${mins}м`;
+        const userData = snap.data();
+        
+        if (type === 'stars') {
+            if ((userData?.stars || 0) < 500) { tg.showAlert("Нужно 500 ⭐"); return; }
         } else {
-            document.getElementById('claim-btn').disabled = false;
-            document.getElementById('bonus-timer').innerText = "Ваш ежедневный бонус готов!";
+            const code = document.getElementById('case-promo-input').value.toUpperCase();
+            if (code !== 'BROKEN132') { tg.showAlert("Неверный промокод!"); return; }
         }
-    }
 
-    window.claimFree = async () => {
-        await updateDoc(userRef, { 
-            stars: increment(50), 
-            lastBonus: serverTimestamp() 
-        });
-        tg.showAlert("Вы получили 50 ⭐!");
-        sync();
-        checkBonusTime();
-    };
-
-    window.saveNick = async () => {
-        const nick = document.getElementById('nick-input').value.trim();
-        if(!nick) {
-            tg.showAlert("Ник не может быть пустым!");
-            return;
-        }
-        await updateDoc(userRef, { name: nick });
-        tg.showAlert("Ник успешно изменен!");
-        sync();
-    };
-
-    window.startRoulette = async () => {
-        const snap = await getDoc(userRef);
-        if ((snap.data()?.stars || 0) < 500) { tg.showAlert("Нужно 500 ⭐"); return; }
-
-        document.getElementById('case-static').style.display = 'none';
         const roul = document.getElementById('roulette');
         const track = document.getElementById('track');
         roul.style.display = 'block';
-        document.getElementById('open-btn').disabled = true;
-
+        
         track.innerHTML = '';
         for(let i=0; i<45; i++) {
-            const p = prizes[Math.floor(Math.random() * prizes.length)];
-            track.innerHTML += `<div class="roulette-item">${p}</div>`;
+            track.innerHTML += `<div class="roulette-item">${prizes[Math.floor(Math.random() * prizes.length)]}</div>`;
         }
 
         const winPrize = prizes[Math.floor(Math.random() * prizes.length)];
         const stopIndex = 40;
         track.children[stopIndex].innerText = winPrize;
-        track.children[stopIndex].style.color = 'gold';
 
         setTimeout(() => {
             const offset = (stopIndex * 100) - (roul.offsetWidth / 2) + 50;
@@ -212,15 +210,42 @@
 
         setTimeout(async () => {
             const item = { id: Date.now(), name: winPrize, date: new Date().toLocaleDateString(), used: false };
-            let starAdd = winPrize.includes("Звезд") ? parseInt(winPrize) : 0;
+            let starChange = (type === 'stars' ? -500 : 0);
+            if(winPrize.includes("Звезд")) starChange += parseInt(winPrize);
+            
             await updateDoc(userRef, {
-                stars: increment(-500 + starAdd),
+                stars: increment(starChange),
                 inventory: arrayUnion(item),
                 openCount: increment(1)
             });
+
             tg.showAlert("Вы выиграли: " + winPrize);
             location.reload(); 
         }, 4500);
+    };
+
+    window.claimFree = async () => {
+        await updateDoc(userRef, { stars: increment(50), lastBonus: serverTimestamp() });
+        sync(); checkBonusTime();
+    };
+
+    async function checkBonusTime() {
+        const snap = await getDoc(userRef);
+        const last = snap.data()?.lastBonus?.toMillis() || 0;
+        const diff = Date.now() - last;
+        const cooldown = 24 * 60 * 60 * 1000;
+        if (diff < cooldown) {
+            document.getElementById('claim-btn').disabled = true;
+            document.getElementById('bonus-timer').innerText = "Бонус уже получен";
+        } else {
+            document.getElementById('claim-btn').disabled = false;
+            document.getElementById('bonus-timer').innerText = "Ваш бонус готов!";
+        }
+    }
+
+    window.saveNick = async () => {
+        const n = document.getElementById('nick-input').value.trim();
+        if(n) { await updateDoc(userRef, { name: n }); sync(); tg.showAlert("Ник изменен!"); }
     };
 
     window.loadInventory = async () => {
@@ -229,23 +254,17 @@
         list.innerHTML = "";
         const inv = snap.data()?.inventory || [];
         inv.reverse().forEach(i => {
-            if(!i.name) return;
             list.innerHTML += `<div class="item-card">
                 <div><b>${i.name}</b><br><small>${i.date}</small></div>
-                ${i.used ? '<span style="color:#555">Использовано</span>' : `<button class="btn-use" onclick="useItem(${i.id})">ИСПОЛЬЗОВАТЬ</button>`}
+                ${i.used ? '<span>Использовано</span>' : `<button onclick="useItem(${i.id})" style="color:gold;background:none;border:1px solid gold;padding:5px;border-radius:5px;">ИСПОЛЬЗОВАТЬ</button>`}
             </div>`;
         });
     };
 
     window.useItem = async (id) => {
-        tg.showConfirm("Использовать приз?", async (ok) => {
-            if(ok) {
-                const snap = await getDoc(userRef);
-                const inv = snap.data().inventory.map(i => i.id === id ? {...i, used: true} : i);
-                await updateDoc(userRef, { inventory: inv });
-                loadInventory();
-            }
-        });
+        const snap = await getDoc(userRef);
+        const inv = snap.data().inventory.map(i => i.id === id ? {...i, used: true} : i);
+        await updateDoc(userRef, { inventory: inv }); loadInventory();
     };
 
     window.loadTop = async () => {
@@ -255,7 +274,7 @@
         l.innerHTML = "";
         let i = 1;
         s.forEach(doc => {
-            l.innerHTML += `<div class="item-card"><div>#${i} ${doc.data().name || "Игрок"}</div><b>${doc.data().stars || 0} ⭐</b></div>`;
+            l.innerHTML += `<div class="item-card"><div>#${i} ${doc.data().name || "Игрок"}</div><b>${doc.data().stars} ⭐</b></div>`;
             i++;
         });
     };
