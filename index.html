@@ -2,65 +2,90 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Play Casino</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Team Play Club</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #fff; text-align: center; margin: 0; padding: 20px; }
-        .card { background: #1a1a1a; border: 2px solid #333; border-radius: 20px; padding: 20px; box-shadow: 0 0 20px rgba(0,255,0,0.1); }
-        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; background: #252525; padding: 10px; border-radius: 10px; }
-        .stat-item { font-size: 14px; }
-        .stat-value { display: block; font-size: 20px; font-weight: bold; color: #00ff00; }
+        :root { --main: #ffd700; --bg: #0f0f0f; --card: #1a1a1a; --text: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 70px; }
         
-        .case-visual { width: 150px; height: 150px; margin: 20px auto; background: linear-gradient(45deg, #111, #222); border: 3px solid #ffd700; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 50px; cursor: pointer; transition: 0.3s; }
-        .case-visual:active { transform: scale(0.9); }
-        .case-visual.spinning { animation: shake 0.5s infinite; }
+        /* Навигация */
+        .nav { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; z-index: 1000; }
+        .nav-btn { color: #888; font-size: 12px; display: flex; flex-direction: column; align-items: center; cursor: pointer; border: none; background: none; }
+        .nav-btn.active { color: var(--main); }
 
-        @keyframes shake {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(5deg); }
-            75% { transform: rotate(-5deg); }
-            100% { transform: rotate(0deg); }
-        }
+        /* Разделы */
+        .page { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        button { background: #ffd700; color: #000; border: none; padding: 15px 25px; border-radius: 12px; font-weight: bold; font-size: 18px; width: 100%; cursor: pointer; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        
-        .win-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .win-overlay h2 { color: #ffd700; }
+        /* Карточки */
+        .stat-card { background: var(--card); padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 15px; border: 1px solid #333; }
+        .val { font-size: 24px; font-weight: bold; color: var(--main); display: block; }
+
+        /* Кейсы */
+        .case-visual { width: 180px; height: 180px; background: linear-gradient(45deg, #1a1a1a, #222); border: 2px dashed var(--main); border-radius: 20px; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 60px; transition: 0.3s; }
+        .spinning { animation: shake 0.5s infinite; }
+        @keyframes shake { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } }
+
+        /* Списки */
+        .item { background: var(--card); margin: 10px 0; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+        button { background: var(--main); color: #000; border: none; padding: 15px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; }
+        button:disabled { background: #555; }
+
+        .win-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="stats">
-        <div class="stat-item">Звезды: <span id="stars" class="stat-value">0</span></div>
-        <div class="stat-item">Бонусы: <span id="balance" class="stat-value">0</span></div>
-    </div>
-    
-    <div id="case" class="case-visual">🎁</div>
-    <p>Цена открытия: <b>100 BP</b></p>
+<div id="page-main" class="page active">
+    <h2>Твой Профиль</h2>
+    <div class="stat-card">Твой баланс <span id="balance" class="val">0 BP</span></div>
+    <div class="stat-card">Твои Звезды <span id="stars" class="val">0 ⭐</span></div>
+    <button id="claim-btn">ПОЛУЧИТЬ +10 BP</button>
+</div>
+
+<div id="page-cases" class="page">
+    <h2>Кейс Клуба</h2>
+    <div id="box" class="case-visual">🎁</div>
+    <p style="text-align:center">Стоимость открытия: <b>100 BP</b></p>
     <button id="open-btn">ОТКРЫТЬ КЕЙС</button>
 </div>
 
-<div id="win-screen" class="win-overlay">
-    <h2>ПОЗДРАВЛЯЕМ!</h2>
-    <div id="win-text" style="font-size: 24px; margin: 20px;">ПРИЗ</div>
-    <button onclick="closeWin()">ЗАБРАТЬ</button>
+<div id="page-inv" class="page">
+    <h2>Мой Инвентарь</h2>
+    <div id="inv-list">Загрузка...</div>
+</div>
+
+<div id="page-top" class="page">
+    <h2>Топ Игроков</h2>
+    <div id="top-list">Загрузка...</div>
+</div>
+
+<div class="nav">
+    <button class="nav-btn active" onclick="tab('main')"><span>👤</span>Профиль</button>
+    <button class="nav-btn" onclick="tab('cases')"><span>🎰</span>Кейсы</button>
+    <button class="nav-btn" onclick="tab('inv')"><span>🎒</span>Инвентарь</button>
+    <button class="nav-btn" onclick="tab('top')"><span>🏆</span>Топ</button>
+</div>
+
+<div id="win-screen" class="win-popup">
+    <h1 style="color:var(--main)">ВЫИГРЫШ!</h1>
+    <div id="win-name" style="font-size: 30px; margin: 20px;">ПРИЗ</div>
+    <button style="width:200px" onclick="location.reload()">ЗАБРАТЬ</button>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, increment, arrayUnion, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ВСТАВЬ СВОЙ КОНФИГ ИЗ СТАРОГО ФАЙЛА
     const firebaseConfig = {
-        apiKey: "ТВОЙ_API_KEY",
+        apiKey: "AIzaSyBk4HzLYN19C4V7SyGMU1d1z33I98X5TDI",
         authDomain: "teamplaybonus.firebaseapp.com",
         projectId: "teamplaybonus",
-        storageBucket: "teamplaybonus.appspot.com",
-        messagingSenderId: "...",
-        appId: "..."
+        storageBucket: "teamplaybonus.firebasestorage.app",
+        messagingSenderId: "968832825102",
+        appId: "1:968832825102:web:675d627c0e0733dc995c3f"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -71,82 +96,92 @@
     const user = tg.initDataUnsafe?.user;
     const userRef = user ? doc(db, "players", user.id.toString()) : null;
 
-    const prizes = [
-        { name: "500 Звезд", chance: 1, type: "stars", val: 500 },
-        { name: "450 Звезд", chance: 1, type: "stars", val: 450 },
-        { name: "400 Звезд", chance: 1, type: "stars", val: 400 },
-        { name: "6ч VIP", chance: 1, type: "item" },
-        { name: "6ч STANDART", chance: 1, type: "item" },
-        { name: "3ч VIP", chance: 3, type: "item" },
-        { name: "350 Звезд", chance: 4, type: "stars", val: 350 },
-        { name: "3ч STANDART", chance: 4, type: "item" },
-        { name: "300 Звезд", chance: 5, type: "stars", val: 300 },
-        { name: "1ч VIP", chance: 6, type: "item" },
-        { name: "1ч STANDART", chance: 10, type: "item" },
-        { name: "ПС 5 - 1ч", chance: 10, type: "item" },
-        { name: "250 Звезд", chance: 10, type: "stars", val: 250 },
-        { name: "200 Звезд", chance: 20, type: "stars", val: 200 },
-        { name: "ПС 4 - 1ч", chance: 20, type: "item" },
-        { name: "150 Звезд", chance: 50, type: "stars", val: 150 },
-        { name: "100 Звезд", chance: 70, type: "stars", val: 100 },
-        { name: "50 Звезд", chance: 80, type: "stars", val: 50 }
-    ];
+    // Переключение вкладок
+    window.tab = (name) => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('page-'+name).classList.add('active');
+        event.currentTarget.classList.add('active');
+        if(name === 'inv') loadInventory();
+        if(name === 'top') loadTop();
+    };
 
-    async function loadStats() {
+    async function updateUI() {
         if (!userRef) return;
         const snap = await getDoc(userRef);
         if (snap.exists()) {
-            const data = snap.data();
-            document.getElementById('balance').innerText = data.points || 0;
-            document.getElementById('stars').innerText = data.stars || 0;
+            document.getElementById('balance').innerText = (snap.data().points || 0) + ' BP';
+            document.getElementById('stars').innerText = (snap.data().stars || 0) + ' ⭐';
         }
     }
 
-    window.closeWin = () => {
-        document.getElementById('win-screen').style.display = 'none';
-        loadStats();
+    document.getElementById('claim-btn').onclick = async () => {
+        await setDoc(userRef, { name: user.username || user.first_name, points: increment(10) }, { merge: true });
+        tg.HapticFeedback.impactOccurred('light');
+        updateUI();
     };
+
+    // ПРИЗЫ И ШАНСЫ (Логика: от редкого к частому)
+    const prizes = [
+        { name: "500 Звезд", chance: 1, type: "stars", val: 500 },
+        { name: "450 Звезд", chance: 1, type: "stars", val: 450 },
+        { name: "6ч VIP", chance: 1, type: "item" },
+        { name: "6ч STANDART", chance: 1, type: "item" },
+        { name: "3ч VIP", chance: 3, type: "item" },
+        { name: "3ч STANDART", chance: 4, type: "item" },
+        { name: "1ч VIP", chance: 6, type: "item" },
+        { name: "1ч STANDART", chance: 10, type: "item" },
+        { name: "ПС 5 - 1ч", chance: 10, type: "item" },
+        { name: "ПС 4 - 1ч", chance: 20, type: "item" },
+        { name: "100 Звезд", chance: 70, type: "stars", val: 100 },
+        { name: "50 Звезд", chance: 100, type: "stars", val: 50 }
+    ];
 
     document.getElementById('open-btn').onclick = async () => {
         const snap = await getDoc(userRef);
-        if (snap.data().points < 100) {
-            alert("Недостаточно бонусов (нужно 100 BP)");
-            return;
-        }
+        if ((snap.data().points || 0) < 100) { tg.showAlert("Нужно 100 BP!"); return; }
 
-        // Анимация
-        const caseEl = document.getElementById('case');
-        caseEl.classList.add('spinning');
-        document.getElementById('open-btn').disabled = true;
-
+        document.getElementById('box').classList.add('spinning');
+        
         setTimeout(async () => {
             const rand = Math.random() * 100;
-            let win = prizes[prizes.length - 1]; // Дефолтный приз
+            let win = prizes.find(p => rand <= p.chance) || prizes[prizes.length-1];
 
-            for (let p of prizes) {
-                if (rand <= p.chance) {
-                    win = p;
-                    break;
-                }
-            }
+            const upd = { points: increment(-100) };
+            if (win.type === "stars") upd.stars = increment(win.val);
+            if (win.type === "item") upd.inventory = arrayUnion({ name: win.name, date: new Date().toLocaleDateString() });
 
-            // Запись в базу
-            const updateData = { points: increment(-100) };
-            if (win.type === "stars") updateData.stars = increment(win.val);
-            if (win.type === "item") updateData.inventory = arrayUnion(win.name);
-
-            await setDoc(userRef, updateData, { merge: true });
-
-            caseEl.classList.remove('spinning');
-            document.getElementById('win-text').innerText = win.name;
+            await setDoc(userRef, upd, { merge: true });
+            
+            document.getElementById('box').classList.remove('spinning');
+            document.getElementById('win-name').innerText = win.name;
             document.getElementById('win-screen').style.display = 'flex';
-            document.getElementById('open-btn').disabled = false;
             tg.HapticFeedback.notificationOccurred('success');
         }, 1500);
     };
 
-    loadStats();
-</script>
+    async function loadInventory() {
+        const snap = await getDoc(userRef);
+        const list = document.getElementById('inv-list');
+        list.innerHTML = '';
+        if (snap.exists() && snap.data().inventory) {
+            snap.data().inventory.forEach(i => {
+                list.innerHTML += `<div class="item"><span>${i.name}</span><small>${i.date}</small></div>`;
+            });
+        } else { list.innerHTML = 'Пусто... Открой свой первый кейс!'; }
+    }
 
+    async function loadTop() {
+        const q = query(collection(db, "players"), orderBy("stars", "desc"), limit(10));
+        const snap = await getDocs(q);
+        const list = document.getElementById('top-list');
+        list.innerHTML = '';
+        snap.forEach((doc, i) => {
+            list.innerHTML += `<div class="item"><span>#${i+1} ${doc.data().name}</span><b>${doc.data().stars || 0} ⭐</b></div>`;
+        });
+    }
+
+    updateUI();
+</script>
 </body>
 </html>
